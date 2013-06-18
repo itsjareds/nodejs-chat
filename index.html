@@ -1,0 +1,42 @@
+<script src="http://code.jquery.com/jquery-latest.min.js"
+        type="text/javascript"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    var socket = io.connect('http://localhost');
+    socket.on("chat", function (msg) {
+        console.log(msg.nick+": "+msg.content);
+        $("#chatarea").append("<strong>&lt;"+msg.nick+"&gt;</strong> "+msg.content+'\n');
+    });
+    socket.on("notify", function(data) {
+        switch (data.type) {
+            case "nick":
+                console.log(data.who+" -> "+data.nick);
+                $("#chatarea").append(data.who+" is now known as "+data.nick+".\n");
+                break;
+            case "topic":
+                if (data.who != null) {
+                    console.log("Topic changed to "+data.content+" by "+data.who+".");
+                    $("#chatarea").append("Topic changed to <u>"+data.content+"</u> by "+data.who+".\n");
+                }
+                $("#topic").html(data.content);
+            default: break;
+        }
+    });
+</script>
+<h3 id="topic"></h3>
+<pre id="chatarea"></pre>
+<input type="text" id="msgdraft" value=""/>
+<input type="button" value="Send" id="send"/>
+<script type="text/javascript">
+    var sendMsg = function() {
+        if ($("#msgdraft").val().length == 0) return;
+        socket.emit("chat", $("#msgdraft").val().trim());
+        $("#msgdraft").val("");
+    };
+    $("#send").click(sendMsg);
+    $("#msgdraft").keypress(function(e) {
+        if (e.which == 13) {
+            sendMsg();
+        }
+    });
+</script>
