@@ -40,51 +40,85 @@
     width: 100%;
     text-align: center;
 }
-<script src="/socket.io/socket.io.js"></script>
 </style>
 </head>
 
 <body>
 
-<div id="container">
+<script src="/socket.io/socket.io.js"></script>
 <script>
+    var printmsg = function(msg) {
+        var $chat = $("#chatarea");
+        $chat.append(msg);
+        $chat.stop().animate({ scrollTop: $chat[0].scrollheight }, "slow");
+    };
+    
     var socket = io.connect('http://localhost');
     socket.on("chat", function (msg) {
-        var $chat = $("#chatarea");
         console.log(msg.nick+": "+msg.content);
-        $chat.append("<strong>&lt;"+msg.nick+"&gt;</strong> "+msg.content+'\n');
-        $chat.stop().animate({ scrollTop: $chat[0].scrollHeight }, "slow");
+        printmsg("<strong>&lt;"+msg.nick+"&gt;</strong> "+msg.content+'\n');
     });
     socket.on("notify", function(data) {
         switch (data.type) {
             case "nick":
                 console.log(data.who+" -> "+data.nick);
-                $("#chatarea").append(data.who+" is now known as "+data.nick+".\n");
+                printmsg(data.who+" is now known as "+data.nick+".\n");
                 break;
             case "topic":
                 if (data.who != null) {
                     console.log("Topic changed to "+data.content+" by "+data.who+".");
-                    $("#chatarea").append("Topic changed to <u>"+data.content+"</u> by "+data.who+".\n");
+                    printmsg("Topic changed to <u>"+data.content+"</u> by "+data.who+".\n");
                 }
                 $("#topic").html(data.content);
             default: break;
         }
     });
 </script>
+
+<div id="container">
 <h3 id="topic"></h3>
 <pre id="chatarea"></pre>
 <input type="button" value="Send" id="send"/>
 <div class="inputbox"><input type="text" id="msgdraft" value=""/></div>
 <script type="text/javascript">
+    var chatHistory = new Array();
+    var histidx = 0;
+    var hist_len = 100;
+
     var sendMsg = function() {
         if ($("#msgdraft").val().length == 0) return;
-        socket.emit("chat", $("#msgdraft").val().trim());
+        
+        var msg = $("#msgdraft").val().trim();
+        chatHistory.push(msg);
+        if (chatHistory.length > hist_len)
+            chatHistory.shift();
+        histidx = chatHistory.length;
+
+        socket.emit("chat", msg);
+
         $("#msgdraft").val("");
     };
     $("#send").click(sendMsg);
-    $("#msgdraft").keypress(function(e) {
-        if (e.which == 13) {
-            sendMsg();
+    $("#msgdraft").keydown(function(e) {
+        switch (e.keycode || e.which) {
+            case 13: // enter key
+                sendMsg();
+                return false;
+                break;
+            case 38: // up arrow
+                if (histidx > 0) {
+                    histidx--;
+                    $(this).val(chatHistory[histidx]);
+                }
+                return false;
+                break;
+            case 40: // down arrow
+                if (histidx < chatHistory.length && histidx < hist_len) {
+                    histidx++;
+                    $(this).val(chatHistory[histidx]);
+                }
+                return false;
+                break;
         }
     });
 </script>
