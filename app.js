@@ -61,12 +61,16 @@ io.sockets.on('connection', function (socket) {
         content:topic,
         who:null
     });
+    io.sockets.emit("notify", { type:"connect", who:nick });
     socket.on('chat', function (content) {
         content = S(content).trim();
         if (content.isEmpty()) return;
         console.log(nick+": "+content.s);
         if (parseCmd(content) == false)
             io.sockets.emit("chat", { "nick": nick, "content": content.escapeHTML().s });
+    });
+    socket.on('disconnect', function() {
+        io.sockets.emit("notify", { type:"disconnect", who:nick });
     });
 
 });
