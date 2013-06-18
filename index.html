@@ -52,8 +52,33 @@
         $chat.append(msg+'\n');
         $chat.stop().animate({ scrollTop: $chat[0].scrollHeight }, "slow");
     };
-    
-    var socket = io.connect('http://192.168.0.104');
+     
+    var socket = io.connect('http://localhost');
+    socket.on("connecting", function() {
+        console.log("connecting...");
+        printmsg("<em>Connecting to chat server...</em>");
+    });
+    socket.on("connect", function() {
+        console.log("connection established");
+        //printmsg("<em>Connection established!</em>");
+        $("#chatarea").html("");
+    });
+    socket.on("disconnect", function() {
+        console.log("disconnected");
+        printmsg("<em>Disconnected.</em>");
+    });
+    socket.on("connect_failed", function() {
+        console.log("failed to connect");
+        printmsg("<em>Failed to connect to chat server.</em>");
+    });
+    socket.on("reconnecting", function() {
+        console.log("reconnecting...");
+        printmsg("<em>Attempting to reconnect...</em>");
+    });
+    socket.on("reconnect_failed", function() {
+        console.log("failed to reconnect");
+        printmsg("<em>Failed to re-establish connection.</em>");
+    });
     socket.on("chat", function (msg) {
         console.log(msg.nick+": "+msg.content);
         printmsg("<strong>&lt;"+msg.nick+"&gt;</strong> "+msg.content);
