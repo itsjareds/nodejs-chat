@@ -26,6 +26,7 @@ io.sockets.on('connection', function (socket) {
         var param = str.substring(idx+1).trimLeft();
         switch (cmd.s) {
             case "topic":
+                ret = true;
                 if (param.isEmpty()) break;
                 
                 topic = param.substring(0,50).s;
@@ -35,16 +36,20 @@ io.sockets.on('connection', function (socket) {
                     content:S(topic).escapeHTML().s,
                     who:nick
                 });
-                ret = true;
                 break;
             case "nick":
+                ret = true;
                 if (param.isEmpty()) break;
 
                 var oldnick = nick;
-                nick = param.substring(0,param.indexOf(' ')).s;
-                console.log(oldnick+" -> "+nick);
-                io.sockets.emit("notify", { type:"nick", who:oldnick, nick:nick });
-                ret = true;
+                nick = param.stripTags().replace(/[^a-z0-9]/gi,'').s;
+                var idx = param.indexOf(' ');
+                if (idx>-1) nick = nick.substring(0,idx);
+
+                if (nick != oldnick) {
+                    console.log(oldnick+" -> "+nick);
+                    io.sockets.emit("notify", { type:"nick", who:oldnick, nick:nick });
+                }
                 break;
             default: break;
         }
