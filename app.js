@@ -65,7 +65,7 @@ io.sockets.on('connection', function (socket) {
         content = S(content).trim();
         if (content.isEmpty()) return;
         console.log(nick+": "+content.s);
-        if (!parseCmd(content))
+        if (parseCmd(content) == false)
             io.sockets.emit("chat", { "nick": nick, "content": content.escapeHTML().s });
     });
 
